@@ -1,0 +1,32 @@
+services:
+  backend:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+  frontend:
+    restart: always
+    environment:
+      NODE_ENV: production
+  worker:
+    restart: always
+  nginx:
+    restart: always
+  db:
+    restart: always
+  redis:
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    profiles: ["monitoring"]
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    env_file: [./infra/.env]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    profiles: ["monitoring"]

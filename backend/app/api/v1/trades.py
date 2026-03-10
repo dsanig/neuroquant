@@ -1,0 +1,27 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.models.entities import OptionContract
+from app.repositories.trade_repository import TradeRepository
+from app.schemas.trade import RollDetectionResult, TradeOut
+from app.services.roll_detection import RollDetectionService
+
+router = APIRouter()
+
+
+@router.get("", response_model=list[TradeOut])
+def list_trades(db: Session = Depends(get_db)) -> list[TradeOut]:
+    trades = TradeRepository(db).list_trades()
+    return [TradeOut.model_validate(t, from_attributes=True) for t in trades]
+
+
+@router.post("/detect-rolls", response_model=RollDetectionResult)
+def detect_rolls(db: Session = Depends(get_db)) -> RollDetectionResult:
+    repo = TradeRepository(db)
+    trades = repo.list_trades()
+    contracts = {str(c.id): c for c in db.scalars(select(OptionContract)).all()}
+    groups = RollDetectionService.assign_roll_groups(trades, contracts)
+    repo.save_all(trades)
+    return RollDetectionResult(roll_groups_found=groups)
