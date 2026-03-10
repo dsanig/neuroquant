@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { getServerToken } from '@/lib/auth';
 
 export default async function ImportsPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const batches = await api.imports(token);
   const firstDetail = batches[0] ? await api.importBatch(batches[0].id, token) : null;
 

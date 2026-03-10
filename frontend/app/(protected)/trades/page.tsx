@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { getServerToken } from '@/lib/auth';
 
 export default async function TradesPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const [trades, strategies, imports] = await Promise.all([api.trades(token), api.strategies(token), api.imports(token)]);
 
   return (

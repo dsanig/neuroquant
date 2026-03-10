@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatDate, formatMoney } from '@/lib/format';
 
 export default async function IncomePage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const income = await api.income(token);
 
   return (

@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { getServerToken } from '@/lib/auth';
 
 export default async function StrategiesPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const strategies = await api.strategies(token);
 
   return (

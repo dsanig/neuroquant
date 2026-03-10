@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatNumber } from '@/lib/format';
 
 export default async function RiskPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const risk = await api.riskSummary(token);
 
   return (
