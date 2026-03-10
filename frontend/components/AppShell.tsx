@@ -1,18 +1,43 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 
-const navItems = ['Dashboard', 'Positions', 'Trades', 'Strategies', 'Risk', 'Margin', 'Performance', 'Income', 'Reports', 'Settings', 'Audit Log'];
+import { NAV_ITEMS } from '@/lib/navigation';
+import { UserMe } from '@/lib/types';
 
-export default function AppShell({ children }: { children: ReactNode }) {
+type Props = {
+  pathname: string;
+  user: UserMe;
+  children: ReactNode;
+};
+
+export default function AppShell({ pathname, user, children }: Props) {
   return (
     <div className="layout">
-      <aside className="sidebar">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+      <aside className="sidebar" aria-label="Primary">
         <div className="brand">INVESTMENT CONTROL CENTER</div>
-        {navItems.map((item) => (
-          <Link key={item} className="nav-item" href="#">{item}</Link>
-        ))}
+        <nav>
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.href} className={`nav-item ${pathname === item.href ? 'active' : ''}`} href={item.href}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </aside>
-      <main className="main">{children}</main>
+      <div>
+        <header className="header card">
+          <div>
+            <p className="subtle">Authenticated Session</p>
+            <strong>{user.full_name}</strong>
+          </div>
+          <div className="subtle">{user.email}</div>
+        </header>
+        <main id="main-content" className="main">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
