@@ -69,6 +69,10 @@ class MarginSummaryOut(BaseModel):
     capital_at_risk: Decimal
     margin_used: Decimal
     broker_requirement: Decimal
+    app_margin_used: Decimal
+    broker_margin_used: Decimal
+    app_notional_exposure: Decimal
+    broker_notional_exposure: Decimal
 
 
 class PerformanceSummaryOut(BaseModel):

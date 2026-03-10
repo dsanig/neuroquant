@@ -55,6 +55,10 @@ export type MarginSummary = {
   capital_at_risk: string;
   margin_used: string;
   broker_requirement: string;
+  app_margin_used: string;
+  broker_margin_used: string;
+  app_notional_exposure: string;
+  broker_notional_exposure: string;
 };
 
 export type PerformanceSummary = {

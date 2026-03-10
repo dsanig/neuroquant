@@ -3,7 +3,7 @@
 ## Design goals
 - Deterministic, auditable financial calculations.
 - Clear separation between transactional ledger records and derived analytics snapshots.
-- Scalable from one account/firm to multi-account and multi-user.
+- Scalable from a single initial firm/account to multi-account and multi-user.
 
 ## System overview
 - **Frontend**: Next.js App Router, TypeScript, server-rendered authenticated app shell.
@@ -56,6 +56,6 @@ Both broker-reported and app-calculated metrics are stored via `margin_metrics.s
 - Persistent volumes for PostgreSQL, Redis, and uploads.
 
 ## Extensibility path
-- Multi-account by linking strategies/positions/trades to `broker_accounts`.
+- Single-tenant bootstrap uses one `firms` row and one `broker_accounts` row; roadmap expands to multi-account by linking strategies/positions/trades to `broker_accounts`.
 - Strategy segmentation already first-class (`strategy_id` in positions/trades/margin).
 - Additional broker import adapters can be added to tasks/services without router churn.

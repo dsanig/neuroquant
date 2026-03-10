@@ -6,8 +6,9 @@
 - `user_roles`
 
 ## Trading domain
+- `firms` (single firm today, multi-firm ready)
 - `strategies`
-- `broker_accounts`
+- `broker_accounts` (single account today, multi-account ready)
 - `instruments`
 - `option_contracts`
 - `trades` (historical immutable ledger + roll linkage)
