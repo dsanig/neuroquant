@@ -16,3 +16,7 @@ def test_key_endpoints_are_registered() -> None:
     assert "/api/v1/income" in paths
     assert "/api/v1/imports" in paths
     assert "/api/v1/audit-log" in paths
+
+    assert "/api/v1/imports/intake" in paths
+    assert "/api/v1/imports/{import_batch_id}" in paths
+    assert "/api/v1/imports/{import_batch_id}/parse" in paths

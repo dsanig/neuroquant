@@ -16,7 +16,8 @@ export default async function ReportsPage() {
         getKey={(row) => row.id}
         emptyText="No report-ready imports found."
         columns={[
-          { key: 'filename', title: 'Filename', render: (row) => row.filename },
+          { key: 'source', title: 'Source', render: (row) => row.source_system_name },
+          { key: 'channel', title: 'Channel', render: (row) => row.intake_channel },
           { key: 'status', title: 'Status', render: (row) => row.status },
           { key: 'rows', title: 'Rows', render: (row) => row.row_count },
           { key: 'imported', title: 'Imported', render: (row) => row.imported_count },

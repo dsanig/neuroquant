@@ -49,7 +49,7 @@ export default async function DashboardPage() {
           <ul className="compact-list">
             {imports.slice(0, 6).map((batch) => (
               <li key={batch.id}>
-                {batch.filename} — <strong>{batch.status}</strong> <span className="subtle">({batch.error_count} errors)</span>
+                {batch.source_system_name} [{batch.intake_channel}] — <strong>{batch.status}</strong> <span className="subtle">({batch.error_count} errors)</span>
               </li>
             ))}
           </ul>

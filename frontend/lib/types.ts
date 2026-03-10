@@ -75,12 +75,50 @@ export type IncomeEvent = {
 
 export type ImportBatch = {
   id: string;
-  filename: string;
-  source_checksum: string;
+  intake_channel: string;
+  source_system_name: string;
   status: string;
+  parser_name: string | null;
+  parser_version: string | null;
   row_count: number;
   imported_count: number;
   error_count: number;
+};
+
+export type ImportFile = {
+  id: string;
+  import_batch_id: string;
+  original_filename: string;
+  checksum_sha256: string;
+  byte_size: number;
+  encrypted: boolean;
+  detected_format: string | null;
+};
+
+export type ImportError = {
+  id: string;
+  import_batch_id: string;
+  import_file_id: string | null;
+  severity: string;
+  code: string;
+  message: string;
+};
+
+export type ImportRowError = {
+  id: string;
+  import_batch_id: string;
+  import_file_id: string;
+  row_number: number;
+  source_row: Record<string, string>;
+  code: string;
+  message: string;
+  parser_version: string;
+};
+
+export type ImportBatchDetail = ImportBatch & {
+  files: ImportFile[];
+  errors: ImportError[];
+  row_errors: ImportRowError[];
 };
 
 export type AuditLog = {
