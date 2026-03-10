@@ -2,7 +2,7 @@ import { api } from '@/lib/api';
 import { getServerToken } from '@/lib/auth';
 
 export default async function SettingsPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const user = await api.me(token);
 
   return (

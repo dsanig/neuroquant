@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatMoney } from '@/lib/format';
 
 export default async function MarginPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const margin = await api.marginSummary(token);
   const discrepancy = Number(margin.margin_used) - Number(margin.broker_requirement);
 

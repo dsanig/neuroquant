@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { getServerToken } from '@/lib/auth';
 
 export default async function ReportsPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const imports = await api.imports(token);
 
   return (

@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatDateTime, formatNumber } from '@/lib/format';
 
 export default async function DashboardPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const [dashboard, risk, imports, trades, strategies] = await Promise.all([
     api.dashboardSummary(token),
     api.riskSummary(token),

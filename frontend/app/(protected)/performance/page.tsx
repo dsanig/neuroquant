@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatDate, formatMoney } from '@/lib/format';
 
 export default async function PerformancePage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const perf = await api.performanceSummary(token);
 
   return (

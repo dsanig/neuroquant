@@ -4,7 +4,7 @@ import { getServerToken } from '@/lib/auth';
 import { formatDateTime } from '@/lib/format';
 
 export default async function AuditLogPage() {
-  const token = getServerToken();
+  const token = await getServerToken();
   const logs = await api.auditLog(token);
 
   return (
