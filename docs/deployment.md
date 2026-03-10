@@ -1,111 +1,118 @@
-# Deployment Guide (Docker Compose)
+# Investment Control Center Deployment (Debian + Docker Compose)
 
-This guide provides a reproducible, production-oriented deployment for the Investment Control Center on self-hosted Debian VMs.
+## 1. Prepare host and code
 
-## 1) Prerequisites
+```bash
+sudo mkdir -p /srv/investment-control-center
+sudo chown -R "$USER":"$USER" /srv/investment-control-center
+git clone <REPO_URL> /srv/investment-control-center
+cd /srv/investment-control-center
+```
 
-- Debian VM with Docker Engine 24+ and Docker Compose v2
-- Access to this repository
-- Firewall rules allowing inbound traffic only to nginx (`80` and optionally `443`)
-
-## 2) Environment preparation
-
-Create environment files from templates and fill values with secure secrets:
+## 2. Copy environment templates
 
 ```bash
 cp .env.example .env
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 cp infra/.env.example infra/.env
+chmod 600 .env backend/.env frontend/.env.local infra/.env
 ```
 
-Security rules:
+## 3. Set secrets and endpoints
 
-- Never commit `.env` files.
-- Use long random values for JWT/admin credentials.
-- Keep database credentials in sync between `.env` and `backend/.env` (`DATABASE_URL`).
-
-## 3) Build and start
-
-Production stack (only nginx exposed externally):
+Edit files with concrete values:
 
 ```bash
-./infra/scripts/build.sh
-./infra/scripts/up.sh
+nano .env
+nano backend/.env
+nano frontend/.env.local
+nano infra/.env
+```
+
+Minimum required values:
+
+- `.env`: `POSTGRES_PASSWORD`, `JWT_SECRET_KEY`
+- `backend/.env`: `DATABASE_URL`, `JWT_SECRET_KEY`
+- `frontend/.env.local`: `NEXT_PUBLIC_API_BASE_URL`
+- `infra/.env`: `GRAFANA_ADMIN_PASSWORD` (if using monitoring)
+
+## 4. Build images
+
+```bash
+./infra/scripts/deploy.sh --build-only
 ```
 
 Equivalent raw command:
 
 ```bash
-docker compose -f compose.yaml -f compose.production.yaml up -d --build
+docker compose -f compose.yaml -f compose.production.yaml build
 ```
 
-## 4) Database migrations (safe workflow)
+## 5. Start stack
 
-Run migrations explicitly after images start:
+```bash
+./infra/scripts/deploy.sh
+```
+
+Equivalent raw command:
+
+```bash
+docker compose -f compose.yaml -f compose.production.yaml up -d
+```
+
+## 6. Run database migrations
 
 ```bash
 docker compose -f compose.yaml -f compose.production.yaml run --rm backend alembic upgrade head
 ```
 
-Recommended rollout order:
-
-1. Deploy code (`build.sh`)
-2. Run migrations
-3. Restart backend and worker if needed
+## 7. Validate deployment
 
 ```bash
-./infra/scripts/restart-service.sh backend
-./infra/scripts/restart-service.sh worker
-./infra/scripts/restart-service.sh scheduler
+./infra/scripts/check_health.sh
 ```
 
-## 5) Health and verification
-
-Check container status:
+Manual checks:
 
 ```bash
-docker compose -f compose.yaml -f compose.production.yaml ps
-```
+# DB connectivity
+docker compose -f compose.yaml -f compose.production.yaml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'SELECT 1;'
 
-Inspect healthcheck output:
-
-```bash
-docker inspect --format '{{json .State.Health}}' $(docker compose -f compose.yaml -f compose.production.yaml ps -q backend) | jq
-```
-
-Test ingress:
-
-```bash
+# API health (through nginx)
 curl -fsS http://127.0.0.1/api/v1/health
-curl -fsS http://127.0.0.1/api/health
+curl -fsS http://127.0.0.1/healthz
+
+# Frontend reachability
+curl -fsSI http://127.0.0.1/
+
+# Worker and scheduler process checks
+docker compose -f compose.yaml -f compose.production.yaml exec -T worker pgrep -fa 'celery.*worker'
+docker compose -f compose.yaml -f compose.production.yaml exec -T scheduler pgrep -fa 'celery.*beat'
 ```
 
-## 6) Network model
+## 8. Read logs
 
-- `app` network: nginx, frontend, backend
-- `data` internal network: db, redis, backend, worker, scheduler
-- In production override:
-  - `db`, `redis`, `backend`, and `frontend` are **not** host-published
-  - nginx is the only public entrypoint
+```bash
+docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200
+docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200 backend
+docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200 worker scheduler
+```
 
-## 7) Cloudflare Tunnel / internal reverse proxy notes
+## 9. Restart one service
 
-### Option A: Cloudflare Tunnel in front of nginx
+```bash
+docker compose -f compose.yaml -f compose.production.yaml restart backend
+```
 
-- Keep nginx listening on `80` internally.
-- Run cloudflared on host or sidecar and point tunnel to `http://nginx:80`.
-- Restrict VM firewall to block direct public access if tunnel is the only ingress path.
+## 10. Rebuild one service only
 
-### Option B: Corporate reverse proxy/VPN ingress
+```bash
+# backend only
+docker compose -f compose.yaml -f compose.production.yaml build backend
+docker compose -f compose.yaml -f compose.production.yaml up -d backend
 
-- Keep nginx private on internal VLAN.
-- Terminate TLS at upstream proxy, forward `X-Forwarded-*` headers.
-- Optionally enable direct TLS in nginx by mounting certs and adding `443` listener in `infra/nginx/nginx.conf`.
-
-## 8) Logging strategy
-
-- Primary logs: container stdout/stderr (`docker compose logs`)
-- nginx additionally writes file logs under named volume `nginx_logs`
-- Configure host-level log rotation for Docker daemon JSON logs and rotate/archive nginx volume logs periodically
-
+# frontend only
+docker compose -f compose.yaml -f compose.production.yaml build frontend
+docker compose -f compose.yaml -f compose.production.yaml up -d frontend nginx
+```
