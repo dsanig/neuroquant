@@ -1,10 +1,29 @@
-from datetime import date, datetime
+from __future__ import annotations
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from datetime import date, datetime
+from decimal import Decimal
+from enum import StrEnum
+
+from sqlalchemy import (
+    JSON,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.models.base import AuditMixin
+
+
+class MetricSource(StrEnum):
+    BROKER = "broker"
+    APP = "app"
 
 
 class User(AuditMixin, Base):
@@ -26,6 +45,13 @@ class UserRole(AuditMixin, Base):
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), index=True)
 
 
+class Instrument(AuditMixin, Base):
+    __tablename__ = "instruments"
+    symbol: Mapped[str] = mapped_column(String(24), unique=True, index=True)
+    underlying: Mapped[str] = mapped_column(String(24), index=True)
+    instrument_type: Mapped[str] = mapped_column(String(32), index=True)
+
+
 class BrokerAccount(AuditMixin, Base):
     __tablename__ = "broker_accounts"
     account_number: Mapped[str] = mapped_column(String(64), unique=True, index=True)
@@ -40,9 +66,10 @@ class Strategy(AuditMixin, Base):
 
 class OptionContract(AuditMixin, Base):
     __tablename__ = "option_contracts"
+    instrument_id: Mapped[str | None] = mapped_column(ForeignKey("instruments.id"), index=True)
     underlying: Mapped[str] = mapped_column(String(16), index=True)
     expiry: Mapped[date] = mapped_column(Date, index=True)
-    strike: Mapped[float] = mapped_column(Float)
+    strike: Mapped[Decimal] = mapped_column(Numeric(12, 4))
     option_type: Mapped[str] = mapped_column(String(4))
     multiplier: Mapped[int] = mapped_column(Integer, default=100)
 
@@ -53,7 +80,9 @@ class Position(AuditMixin, Base):
     broker_account_id: Mapped[str] = mapped_column(ForeignKey("broker_accounts.id"), index=True)
     option_contract_id: Mapped[str] = mapped_column(ForeignKey("option_contracts.id"), index=True)
     quantity: Mapped[int] = mapped_column(Integer)
-    avg_price: Mapped[float] = mapped_column(Float)
+    avg_price: Mapped[Decimal] = mapped_column(Numeric(16, 6))
+    mark_price: Mapped[Decimal | None] = mapped_column(Numeric(16, 6), nullable=True)
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
 
 
 class Trade(AuditMixin, Base):
@@ -66,70 +95,100 @@ class Trade(AuditMixin, Base):
     symbol: Mapped[str] = mapped_column(String(24), index=True)
     side: Mapped[str] = mapped_column(String(8), index=True)
     quantity: Mapped[int] = mapped_column(Integer)
-    price: Mapped[float] = mapped_column(Float)
+    price: Mapped[Decimal] = mapped_column(Numeric(16, 6))
+    premium: Mapped[Decimal | None] = mapped_column(Numeric(16, 6), nullable=True)
     executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     roll_group_id: Mapped[str | None] = mapped_column(String(64), index=True)
-
-
-class DailySnapshot(AuditMixin, Base):
-    __tablename__ = "daily_snapshots"
-    snapshot_date: Mapped[date] = mapped_column(Date, index=True)
-    nav: Mapped[float] = mapped_column(Numeric(18, 4))
-    pnl_day: Mapped[float] = mapped_column(Numeric(18, 4))
 
 
 class GreeksSnapshot(AuditMixin, Base):
     __tablename__ = "greeks_snapshots"
     snapshot_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    delta: Mapped[float] = mapped_column(Float)
-    gamma: Mapped[float] = mapped_column(Float)
-    theta: Mapped[float] = mapped_column(Float)
-    vega: Mapped[float] = mapped_column(Float)
-
-
-class IncomeEvent(AuditMixin, Base):
-    __tablename__ = "income_events"
-    event_date: Mapped[date] = mapped_column(Date, index=True)
-    amount: Mapped[float] = mapped_column(Numeric(18, 4))
-    event_type: Mapped[str] = mapped_column(String(32), index=True)
+    strategy_id: Mapped[str | None] = mapped_column(ForeignKey("strategies.id"), index=True)
+    instrument_id: Mapped[str | None] = mapped_column(ForeignKey("instruments.id"), index=True)
+    delta: Mapped[Decimal] = mapped_column(Numeric(18, 6))
+    gamma: Mapped[Decimal] = mapped_column(Numeric(18, 6))
+    theta: Mapped[Decimal] = mapped_column(Numeric(18, 6))
+    vega: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    source: Mapped[str] = mapped_column(String(32), default=MetricSource.APP.value)
 
 
 class RiskMetric(AuditMixin, Base):
     __tablename__ = "risk_metrics"
     measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    strategy_id: Mapped[str | None] = mapped_column(ForeignKey("strategies.id"), index=True)
+    instrument_id: Mapped[str | None] = mapped_column(ForeignKey("instruments.id"), index=True)
     metric_name: Mapped[str] = mapped_column(String(64), index=True)
-    metric_value: Mapped[float] = mapped_column(Numeric(20, 6))
-    source: Mapped[str] = mapped_column(String(32), default="app")
+    metric_value: Mapped[Decimal] = mapped_column(Numeric(20, 6))
+    source: Mapped[str] = mapped_column(String(32), default=MetricSource.APP.value)
 
 
 class MarginMetric(AuditMixin, Base):
     __tablename__ = "margin_metrics"
     measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     strategy_id: Mapped[str | None] = mapped_column(ForeignKey("strategies.id"), index=True)
-    notional_exposure: Mapped[float] = mapped_column(Numeric(20, 4))
-    margin_used: Mapped[float] = mapped_column(Numeric(20, 4))
-    broker_requirement: Mapped[float | None] = mapped_column(Numeric(20, 4))
-    source: Mapped[str] = mapped_column(String(32), default="app")
+    notional_exposure: Mapped[Decimal] = mapped_column(Numeric(20, 4))
+    capital_at_risk: Mapped[Decimal] = mapped_column(Numeric(20, 4), default=Decimal("0"))
+    margin_used: Mapped[Decimal] = mapped_column(Numeric(20, 4))
+    broker_requirement: Mapped[Decimal | None] = mapped_column(Numeric(20, 4))
+    source: Mapped[str] = mapped_column(String(32), default=MetricSource.APP.value)
+
+
+class PerformanceSnapshot(AuditMixin, Base):
+    __tablename__ = "performance_snapshots"
+    snapshot_date: Mapped[date] = mapped_column(Date, index=True)
+    strategy_id: Mapped[str | None] = mapped_column(ForeignKey("strategies.id"), index=True)
+    nav: Mapped[Decimal] = mapped_column(Numeric(18, 4))
+    pnl_day: Mapped[Decimal] = mapped_column(Numeric(18, 4))
+    pnl_mtd: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    pnl_ytd: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    source: Mapped[str] = mapped_column(String(32), default=MetricSource.APP.value)
+
+
+class IncomeEvent(AuditMixin, Base):
+    __tablename__ = "income_events"
+    strategy_id: Mapped[str | None] = mapped_column(ForeignKey("strategies.id"), index=True)
+    event_date: Mapped[date] = mapped_column(Date, index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 4))
+    event_type: Mapped[str] = mapped_column(String(32), index=True)
 
 
 class AuditLog(AuditMixin, Base):
     __tablename__ = "audit_logs"
+    actor_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
     event_type: Mapped[str] = mapped_column(String(100), index=True)
     entity_type: Mapped[str] = mapped_column(String(100), index=True)
     entity_id: Mapped[str] = mapped_column(String(64), index=True)
-    payload: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict] = mapped_column(JSON)
 
 
-class FileImport(AuditMixin, Base):
-    __tablename__ = "file_imports"
+class FileImportBatch(AuditMixin, Base):
+    __tablename__ = "file_import_batches"
+    __table_args__ = (UniqueConstraint("source_checksum", name="uq_file_import_checksum"),)
     filename: Mapped[str] = mapped_column(String(255), index=True)
+    source_checksum: Mapped[str] = mapped_column(String(128), index=True)
     status: Mapped[str] = mapped_column(String(32), index=True)
     row_count: Mapped[int] = mapped_column(Integer, default=0)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class FileImportRow(AuditMixin, Base):
+    __tablename__ = "file_import_rows"
+    import_batch_id: Mapped[str] = mapped_column(ForeignKey("file_import_batches.id"), index=True)
+    row_number: Mapped[int] = mapped_column(Integer)
+    raw_payload: Mapped[dict] = mapped_column(JSON)
+    entity_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    entity_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class TaskExecutionHistory(AuditMixin, Base):
     __tablename__ = "task_execution_history"
     task_name: Mapped[str] = mapped_column(String(255), index=True)
+    celery_task_id: Mapped[str | None] = mapped_column(String(128), index=True)
     status: Mapped[str] = mapped_column(String(32), index=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
