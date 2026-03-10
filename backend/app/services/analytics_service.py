@@ -21,15 +21,33 @@ class AnalyticsService:
 
     def margin_summary(self) -> MarginSummaryOut:
         metrics = self.repo.latest_margin_summary()
+        z = Decimal("0")
         if not metrics:
-            z = Decimal("0")
-            return MarginSummaryOut(as_of=self.repo.utc_now(), notional_exposure=z, capital_at_risk=z, margin_used=z, broker_requirement=z)
+            return MarginSummaryOut(
+                as_of=self.repo.utc_now(),
+                notional_exposure=z,
+                capital_at_risk=z,
+                margin_used=z,
+                broker_requirement=z,
+                app_margin_used=z,
+                broker_margin_used=z,
+                app_notional_exposure=z,
+                broker_notional_exposure=z,
+            )
+
+        app_metrics = [m for m in metrics if m.source == "app"]
+        broker_metrics = [m for m in metrics if m.source == "broker"]
+
         return MarginSummaryOut(
             as_of=metrics[0].measured_at,
-            notional_exposure=sum((m.notional_exposure for m in metrics), Decimal("0")),
-            capital_at_risk=sum((m.capital_at_risk for m in metrics), Decimal("0")),
-            margin_used=sum((m.margin_used for m in metrics), Decimal("0")),
-            broker_requirement=sum((m.broker_requirement or Decimal("0") for m in metrics), Decimal("0")),
+            notional_exposure=sum((m.notional_exposure for m in metrics), z),
+            capital_at_risk=sum((m.capital_at_risk for m in metrics), z),
+            margin_used=sum((m.margin_used for m in metrics), z),
+            broker_requirement=sum((m.broker_requirement or z for m in metrics), z),
+            app_margin_used=sum((m.margin_used for m in app_metrics), z),
+            broker_margin_used=sum((m.margin_used for m in broker_metrics), z),
+            app_notional_exposure=sum((m.notional_exposure for m in app_metrics), z),
+            broker_notional_exposure=sum((m.notional_exposure for m in broker_metrics), z),
         )
 
     def risk_summary(self) -> RiskSummaryOut:

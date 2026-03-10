@@ -6,6 +6,8 @@ def test_initial_migration_contains_core_tables() -> None:
     for table in [
         "users",
         "roles",
+        "firms",
+        "broker_accounts",
         "strategies",
         "trades",
         "positions",
