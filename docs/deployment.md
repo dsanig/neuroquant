@@ -1,118 +1,54 @@
-# Investment Control Center Deployment (Debian + Docker Compose)
+# Investment Control Center Deployment (Debian VM + Docker Compose)
 
-## 1. Prepare host and code
+## Operator automation quickstart
 
-```bash
-sudo mkdir -p /srv/investment-control-center
-sudo chown -R "$USER":"$USER" /srv/investment-control-center
-git clone <REPO_URL> /srv/investment-control-center
-cd /srv/investment-control-center
-```
-
-## 2. Copy environment templates
+The repo includes an operator-grade automation layer for Debian VMs using Docker Engine and the Docker Compose plugin.
 
 ```bash
+# 1) Bootstrap a fresh VM (installs Docker + clones repo to /opt/neuroquant/repo)
+cd /opt/neuroquant/repo
+sudo REPO_URL=<REPO_URL> make setup-vm
+
+# 2) Configure environment files
 cp .env.example .env
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 cp infra/.env.example infra/.env
-chmod 600 .env backend/.env frontend/.env.local infra/.env
+
+# 3) Full deployment (build + up + migrate + health)
+make deploy
+
+# 4) Fast daily loops
+make rebuild-frontend      # rebuild/restart frontend + nginx only
+make rebuild-backend       # rebuild/restart backend + worker + scheduler
+
+# 5) Operations
+make health
+make logs                  # all services
+REPO_DIR=/opt/neuroquant/repo ./infra/scripts/logs.sh backend worker
 ```
 
-## 3. Set secrets and endpoints
+## Script reference
 
-Edit files with concrete values:
+All scripts default to `REPO_DIR=/opt/neuroquant/repo`.
 
-```bash
-nano .env
-nano backend/.env
-nano frontend/.env.local
-nano infra/.env
-```
+- `infra/scripts/setup-vm.sh`
+  - Installs Docker Engine, Docker Compose plugin, git, and make.
+  - Ensures the repo path exists and clones/fetches code.
+  - Seeds missing `.env` files from `*.example` templates.
+- `infra/scripts/deploy.sh`
+  - Standard deploy flow: build images, start services, run migrations, run health checks.
+  - Options: `--build-only`, `--skip-build`, `--skip-migrate`, `--skip-health`.
+- `infra/scripts/rebuild-frontend.sh`
+  - Rebuilds `frontend` and reconciles `frontend nginx`.
+- `infra/scripts/rebuild-backend.sh`
+  - Rebuilds `backend`, runs migrations (unless `--skip-migrate`), and reconciles `backend worker scheduler`.
+- `infra/scripts/logs.sh [service ...]`
+  - Streams compose logs for all services or selected services.
+- `infra/scripts/health.sh`
+  - Verifies compose status, DB connectivity, API/frontend reachability, and Celery worker/scheduler processes.
 
-Minimum required values:
+## Service names used by automation
 
-- `.env`: `POSTGRES_PASSWORD`, `JWT_SECRET_KEY`
-- `backend/.env`: `DATABASE_URL`, `JWT_SECRET_KEY`
-- `frontend/.env.local`: `NEXT_PUBLIC_API_BASE_URL`
-- `infra/.env`: `GRAFANA_ADMIN_PASSWORD` (if using monitoring)
-
-## 4. Build images
-
-```bash
-./infra/scripts/deploy.sh --build-only
-```
-
-Equivalent raw command:
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml build
-```
-
-## 5. Start stack
-
-```bash
-./infra/scripts/deploy.sh
-```
-
-Equivalent raw command:
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml up -d
-```
-
-## 6. Run database migrations
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml run --rm backend alembic upgrade head
-```
-
-## 7. Validate deployment
-
-```bash
-./infra/scripts/check_health.sh
-```
-
-Manual checks:
-
-```bash
-# DB connectivity
-docker compose -f compose.yaml -f compose.production.yaml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'SELECT 1;'
-
-# API health (through nginx)
-curl -fsS http://127.0.0.1/api/v1/health
-curl -fsS http://127.0.0.1/healthz
-
-# Frontend reachability
-curl -fsSI http://127.0.0.1/
-
-# Worker and scheduler process checks
-docker compose -f compose.yaml -f compose.production.yaml exec -T worker pgrep -fa 'celery.*worker'
-docker compose -f compose.yaml -f compose.production.yaml exec -T scheduler pgrep -fa 'celery.*beat'
-```
-
-## 8. Read logs
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200
-docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200 backend
-docker compose -f compose.yaml -f compose.production.yaml logs -f --tail=200 worker scheduler
-```
-
-## 9. Restart one service
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml restart backend
-```
-
-## 10. Rebuild one service only
-
-```bash
-# backend only
-docker compose -f compose.yaml -f compose.production.yaml build backend
-docker compose -f compose.yaml -f compose.production.yaml up -d backend
-
-# frontend only
-docker compose -f compose.yaml -f compose.production.yaml build frontend
-docker compose -f compose.yaml -f compose.production.yaml up -d frontend nginx
-```
+The automation scripts use the compose service names defined in this repository:
+`db`, `redis`, `backend`, `worker`, `scheduler`, `frontend`, `nginx`.
