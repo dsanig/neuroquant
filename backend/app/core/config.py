@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 10080
     log_level: str = "INFO"
+    import_storage_dir: str = "./import_storage"
 
 
 settings = Settings()

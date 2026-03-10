@@ -2,6 +2,7 @@ import {
   AuditLog,
   DashboardSummary,
   ImportBatch,
+  ImportBatchDetail,
   IncomeEvent,
   MarginSummary,
   PerformanceSummary,
@@ -65,5 +66,6 @@ export const api = {
   performanceSummary: (token?: string) => request<PerformanceSummary>('/performance/summary', { headers: authHeaders(token) }),
   income: (token?: string) => request<IncomeEvent[]>('/income', { headers: authHeaders(token) }),
   imports: (token?: string) => request<ImportBatch[]>('/imports', { headers: authHeaders(token) }),
+  importBatch: (id: string, token?: string) => request<ImportBatchDetail>(`/imports/${id}`, { headers: authHeaders(token) }),
   auditLog: (token?: string) => request<AuditLog[]>('/audit-log', { headers: authHeaders(token) }),
 };

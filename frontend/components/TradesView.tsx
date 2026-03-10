@@ -19,7 +19,7 @@ export default function TradesView({ trades, strategies, imports }: Props) {
   const [sort, setSort] = useState('executed-desc');
 
   const strategyMap = useMemo(() => Object.fromEntries(strategies.map((s) => [s.id, s.name])), [strategies]);
-  const importStatus = imports.length ? `${imports[0].status} / ${imports[0].filename}` : 'No import batches';
+  const importStatus = imports.length ? `${imports[0].status} / ${imports[0].source_system_name}` : 'No import batches';
 
   const filtered = useMemo(() => {
     let rows = trades.filter((t) => {

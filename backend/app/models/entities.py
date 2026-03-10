@@ -184,6 +184,61 @@ class FileImportRow(AuditMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class ImportBatch(AuditMixin, Base):
+    __tablename__ = "import_batch"
+    intake_channel: Mapped[str] = mapped_column(String(32), index=True)
+    source_system_name: Mapped[str] = mapped_column(String(120), index=True)
+    status: Mapped[str] = mapped_column(String(32), index=True, default="received")
+    parser_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    parser_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    row_count: Mapped[int] = mapped_column(Integer, default=0)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ImportFile(AuditMixin, Base):
+    __tablename__ = "import_file"
+    import_batch_id: Mapped[str] = mapped_column(ForeignKey("import_batch.id"), index=True)
+    original_filename: Mapped[str] = mapped_column(String(255), index=True)
+    storage_uri: Mapped[str] = mapped_column(String(500))
+    encrypted: Mapped[bool] = mapped_column(default=False)
+    checksum_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    byte_size: Mapped[int] = mapped_column(Integer)
+    mime_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    format_hint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    detected_format: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class ImportError(AuditMixin, Base):
+    __tablename__ = "import_error"
+    import_batch_id: Mapped[str] = mapped_column(ForeignKey("import_batch.id"), index=True)
+    import_file_id: Mapped[str | None] = mapped_column(ForeignKey("import_file.id"), nullable=True, index=True)
+    severity: Mapped[str] = mapped_column(String(16), index=True, default="error")
+    code: Mapped[str] = mapped_column(String(64), index=True)
+    message: Mapped[str] = mapped_column(Text)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class ImportRowError(AuditMixin, Base):
+    __tablename__ = "import_row_error"
+    import_batch_id: Mapped[str] = mapped_column(ForeignKey("import_batch.id"), index=True)
+    import_file_id: Mapped[str] = mapped_column(ForeignKey("import_file.id"), index=True)
+    row_number: Mapped[int] = mapped_column(Integer, index=True)
+    source_row: Mapped[dict] = mapped_column(JSON)
+    code: Mapped[str] = mapped_column(String(64), index=True)
+    message: Mapped[str] = mapped_column(Text)
+    parser_version: Mapped[str] = mapped_column(String(32))
+
+
+class SourceMappingMetadata(AuditMixin, Base):
+    __tablename__ = "source_mapping_metadata"
+    source_system_name: Mapped[str] = mapped_column(String(120), index=True)
+    mapping_version: Mapped[str] = mapped_column(String(32), index=True)
+    object_type: Mapped[str] = mapped_column(String(64), index=True)
+    mapping_schema: Mapped[dict] = mapped_column(JSON)
+    active: Mapped[bool] = mapped_column(default=True, index=True)
+
+
 class TaskExecutionHistory(AuditMixin, Base):
     __tablename__ = "task_execution_history"
     task_name: Mapped[str] = mapped_column(String(255), index=True)
