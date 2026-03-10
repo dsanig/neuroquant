@@ -1,31 +1,21 @@
-COMPOSE=docker compose
+REPO_DIR ?= /opt/neuroquant/repo
 
-.PHONY: up down logs build migrate seed test lint format
+.PHONY: setup-vm deploy rebuild-frontend rebuild-backend logs health
 
-up:
-	$(COMPOSE) -f compose.yaml up -d --build
+setup-vm:
+	sudo REPO_DIR="$(REPO_DIR)" ./infra/scripts/setup-vm.sh
 
-down:
-	$(COMPOSE) -f compose.yaml down
+deploy:
+	REPO_DIR="$(REPO_DIR)" ./infra/scripts/deploy.sh
+
+rebuild-frontend:
+	REPO_DIR="$(REPO_DIR)" ./infra/scripts/rebuild-frontend.sh
+
+rebuild-backend:
+	REPO_DIR="$(REPO_DIR)" ./infra/scripts/rebuild-backend.sh
 
 logs:
-	$(COMPOSE) -f compose.yaml logs -f --tail=200
+	REPO_DIR="$(REPO_DIR)" ./infra/scripts/logs.sh
 
-build:
-	$(COMPOSE) -f compose.yaml build
-
-migrate:
-	$(COMPOSE) -f compose.yaml run --rm backend alembic upgrade head
-
-seed:
-	$(COMPOSE) -f compose.yaml run --rm backend python -m app.seed
-
-test:
-	$(COMPOSE) -f compose.yaml run --rm backend pytest -q
-
-lint:
-	$(COMPOSE) -f compose.yaml run --rm backend ruff check app
-	$(COMPOSE) -f compose.yaml run --rm frontend npm run lint
-
-format:
-	$(COMPOSE) -f compose.yaml run --rm backend ruff format app
+health:
+	REPO_DIR="$(REPO_DIR)" ./infra/scripts/health.sh
