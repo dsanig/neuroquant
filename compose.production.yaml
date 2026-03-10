@@ -17,9 +17,9 @@ services:
 
   nginx:
     ports:
-      - "80:80"
+      - "80:8080"
       # Enable this mapping when terminating TLS directly on nginx.
-      # - "443:443"
+      # - "443:8443"
 
   # Optional Prometheus stack for metrics scraping and alerting.
   prometheus:

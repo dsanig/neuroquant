@@ -16,9 +16,10 @@ from app.services.imports.parsers.registry import ParserRegistry
 
 
 class ImportService:
-    def __init__(self, db: Session, registry: ParserRegistry | None = None):
+    def __init__(self, db: Session, registry: ParserRegistry | None = None, actor_user_id: str | None = None):
         self.db = db
         self.registry = registry or ParserRegistry()
+        self.actor_user_id = actor_user_id
 
     def upload_intake(self, *, filename: str, payload: bytes, source_system_name: str, intake_channel: str = "ui_upload") -> ImportBatch:
         checksum = hashlib.sha256(payload).hexdigest()
@@ -46,7 +47,7 @@ class ImportService:
             mime_type="text/csv" if filename.endswith(".csv") else None,
         )
         self.db.add(import_file)
-        self._audit("import.uploaded", "import_batch", str(batch.id), {"file": filename, "checksum": checksum, "channel": intake_channel})
+        self._audit("data.import.uploaded", "import_batch", str(batch.id), {"file": filename, "checksum": checksum, "channel": intake_channel})
         self.db.commit()
         return batch
 
@@ -121,7 +122,7 @@ class ImportService:
         batch.imported_count = imported
         batch.error_count = len(row_errors)
         batch.status = "completed" if not row_errors else "completed_with_errors"
-        self._audit("import.parsed", "import_batch", str(batch.id), {"parser": parser.parser_name, "version": parser.parser_version, "rows": batch.row_count, "imported": imported, "errors": len(row_errors)})
+        self._audit("data.import.parsed", "import_batch", str(batch.id), {"parser": parser.parser_name, "version": parser.parser_version, "rows": batch.row_count, "imported": imported, "errors": len(row_errors)})
         self.db.commit()
         return batch
 
@@ -153,7 +154,7 @@ class ImportService:
         return [h.strip() for h in reader.fieldnames], rows
 
     def _audit(self, event_type: str, entity_type: str, entity_id: str, payload: dict) -> None:
-        self.db.add(AuditLog(event_type=event_type, entity_type=entity_type, entity_id=entity_id, payload=payload))
+        self.db.add(AuditLog(actor_user_id=self.actor_user_id, event_type=event_type, entity_type=entity_type, entity_id=entity_id, payload=payload))
 
     def _ensure_broker_account(self, account_number: str, broker_name: str) -> BrokerAccount:
         account = self.db.scalar(select(BrokerAccount).where(BrokerAccount.account_number == account_number))

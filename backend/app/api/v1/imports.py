@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.entities import ImportBatch, ImportError, ImportFile, ImportRowError
 from app.schemas.domain import (
@@ -17,6 +17,7 @@ from app.schemas.domain import (
     ImportRowErrorOut,
     UserMeOut,
 )
+from app.services.audit_service import AuditService
 from app.services.imports import ImportService
 from app.tasks.jobs import parse_import_batch_async
 
@@ -30,8 +31,12 @@ def list_imports(_: UserMeOut = Depends(get_current_user), db: Session = Depends
 
 
 @router.post("/intake", response_model=ImportBatchOut)
-def intake_import(req: ImportIntakeRequest, _: UserMeOut = Depends(get_current_user), db: Session = Depends(get_db)) -> ImportBatchOut:
-    service = ImportService(db)
+def intake_import(
+    req: ImportIntakeRequest,
+    user: UserMeOut = Depends(require_roles("admin", "operator")),
+    db: Session = Depends(get_db),
+) -> ImportBatchOut:
+    service = ImportService(db, actor_user_id=user.id)
     try:
         payload = base64.b64decode(req.content_base64)
         batch = service.upload_intake(
@@ -46,17 +51,35 @@ def intake_import(req: ImportIntakeRequest, _: UserMeOut = Depends(get_current_u
 
 
 @router.post("/{import_batch_id}/parse", response_model=dict)
-def enqueue_parse(import_batch_id: str, _: UserMeOut = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+def enqueue_parse(
+    import_batch_id: str,
+    user: UserMeOut = Depends(require_roles("admin", "operator")),
+    db: Session = Depends(get_db),
+) -> dict:
     batch = db.get(ImportBatch, import_batch_id)
     if not batch:
         raise HTTPException(status_code=404, detail="Import batch not found")
+
     task = parse_import_batch_async.delay(import_batch_id)
+    AuditService(db).log(
+        event_type="import.parse.queued",
+        entity_type="import_batch",
+        entity_id=import_batch_id,
+        actor_user_id=user.id,
+        payload={"task_id": task.id},
+    )
+    db.commit()
     return {"task_id": task.id, "status": "queued"}
 
 
 @router.post("/{import_batch_id}/parse-inline", response_model=ImportBatchOut)
-def parse_inline(import_batch_id: str, req: ImportParseRequest, _: UserMeOut = Depends(get_current_user), db: Session = Depends(get_db)) -> ImportBatchOut:
-    service = ImportService(db)
+def parse_inline(
+    import_batch_id: str,
+    req: ImportParseRequest,
+    user: UserMeOut = Depends(require_roles("admin", "operator")),
+    db: Session = Depends(get_db),
+) -> ImportBatchOut:
+    service = ImportService(db, actor_user_id=user.id)
     try:
         file_bytes = base64.b64decode(req.content_base64)
         batch = service.parse_file(import_batch_id=import_batch_id, file_bytes=file_bytes)

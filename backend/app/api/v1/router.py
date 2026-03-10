@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import audit_log, auth, dashboard, health, imports, income, margin, performance, positions, risk, strategies, trades
+from app.api.v1 import audit_log, auth, dashboard, health, imports, income, margin, performance, positions, risk, strategies, system, trades
 
 api_router = APIRouter()
 
@@ -16,3 +16,5 @@ api_router.include_router(performance.router, prefix="/performance", tags=["perf
 api_router.include_router(income.router, prefix="/income", tags=["income"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(audit_log.router, prefix="/audit-log", tags=["audit-log"])
+
+api_router.include_router(system.router, prefix="/system", tags=["system"])
