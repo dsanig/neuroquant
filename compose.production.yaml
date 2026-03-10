@@ -29,6 +29,8 @@ services:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     profiles: ["monitoring"]
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
     restart: unless-stopped
     networks:
       - app
@@ -45,6 +47,8 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
     profiles: ["monitoring"]
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3001}:3000"
     restart: unless-stopped
     networks:
       - app
