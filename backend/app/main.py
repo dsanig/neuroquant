@@ -15,9 +15,4 @@ def on_startup() -> None:
     wait_for_database()
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
 app.include_router(api_router, prefix=settings.api_v1_prefix)
