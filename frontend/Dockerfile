@@ -22,7 +22,6 @@ RUN apt-get update \
     && groupadd --system nodejs \
     && useradd --system --gid nodejs nextjs
 
-COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
