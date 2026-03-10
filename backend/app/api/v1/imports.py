@@ -1,3 +1,4 @@
+import structlog
 import base64
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -22,6 +23,7 @@ from app.services.imports import ImportService
 from app.tasks.jobs import parse_import_batch_async
 
 router = APIRouter()
+logger = structlog.get_logger(__name__)
 
 
 @router.get("", response_model=list[ImportBatchOut])
@@ -61,6 +63,7 @@ def enqueue_parse(
         raise HTTPException(status_code=404, detail="Import batch not found")
 
     task = parse_import_batch_async.delay(import_batch_id)
+    logger.info("import.parse.enqueued", import_batch_id=import_batch_id, task_id=task.id, actor_user_id=user.id)
     AuditService(db).log(
         event_type="import.parse.queued",
         entity_type="import_batch",

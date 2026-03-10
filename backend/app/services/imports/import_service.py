@@ -4,15 +4,18 @@ import csv
 import hashlib
 from io import StringIO
 from pathlib import Path
-
-from app.core.config import settings
 from uuid import uuid4
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.metrics import IMPORT_BATCH_COUNT, IMPORT_ERROR_COUNT
 from app.models.entities import AuditLog, BrokerAccount, ImportBatch, ImportError, ImportFile, ImportRowError, Strategy, Trade
 from app.services.imports.parsers.registry import ParserRegistry
+
+logger = structlog.get_logger(__name__)
 
 
 class ImportService:
@@ -25,6 +28,7 @@ class ImportService:
         checksum = hashlib.sha256(payload).hexdigest()
         existing_file = self.db.scalar(select(ImportFile).where(ImportFile.checksum_sha256 == checksum))
         if existing_file:
+            logger.warning("import.upload.duplicate_checksum", filename=filename, checksum=checksum)
             raise ValueError("duplicate file checksum detected")
 
         batch = ImportBatch(intake_channel=intake_channel, source_system_name=source_system_name, status="received")
@@ -48,6 +52,7 @@ class ImportService:
         )
         self.db.add(import_file)
         self._audit("data.import.uploaded", "import_batch", str(batch.id), {"file": filename, "checksum": checksum, "channel": intake_channel})
+        logger.info("import.upload.accepted", import_batch_id=str(batch.id), filename=filename, source_system=source_system_name, intake_channel=intake_channel)
         self.db.commit()
         return batch
 
@@ -64,7 +69,9 @@ class ImportService:
         parser = self.registry.detect(headers, batch.source_system_name)
         if not parser:
             self.capture_error(import_batch_id=batch.id, import_file_id=import_file.id, code="PARSER_NOT_FOUND", message="No parser matched file format")
+            IMPORT_BATCH_COUNT.labels(source_system=batch.source_system_name, status="failed").inc()
             batch.status = "failed"
+            logger.error("import.parse.parser_not_found", import_batch_id=str(batch.id), source_system=batch.source_system_name, headers=headers)
             self.db.commit()
             return batch
 
@@ -86,6 +93,7 @@ class ImportService:
                     parser_version=parser.parser_version,
                 )
             )
+            IMPORT_ERROR_COUNT.labels(code=code).inc()
 
         imported = 0
         for record in records:
@@ -122,11 +130,15 @@ class ImportService:
         batch.imported_count = imported
         batch.error_count = len(row_errors)
         batch.status = "completed" if not row_errors else "completed_with_errors"
+        IMPORT_BATCH_COUNT.labels(source_system=batch.source_system_name, status=batch.status).inc()
         self._audit("data.import.parsed", "import_batch", str(batch.id), {"parser": parser.parser_name, "version": parser.parser_version, "rows": batch.row_count, "imported": imported, "errors": len(row_errors)})
+        logger.info("import.parse.completed", import_batch_id=str(batch.id), parser=parser.parser_name, rows=batch.row_count, imported=imported, errors=len(row_errors), status=batch.status)
         self.db.commit()
         return batch
 
     def capture_error(self, *, import_batch_id: str, import_file_id: str | None, code: str, message: str, details: dict | None = None) -> None:
+        IMPORT_ERROR_COUNT.labels(code=code).inc()
+        logger.error("import.error.captured", import_batch_id=import_batch_id, import_file_id=import_file_id, code=code, message=message)
         self.db.add(
             ImportError(
                 import_batch_id=import_batch_id,
