@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models.entities import BrokerAccount, MarginMetric, Role, Strategy, Trade, User
+from app.models.entities import BrokerAccount, MarginMetric, Role, Strategy, Trade, User, UserRole
 
 
 def run() -> None:
@@ -17,8 +17,11 @@ def run() -> None:
         role = Role(name="admin")
         broker = BrokerAccount(account_number="U123456", broker_name="Internal Broker")
         strategy = Strategy(name="Income Wheel", description="CSP and covered call cycle")
-        db.add_all([admin, role, broker, strategy])
+        operator_role = Role(name="operator")
+        auditor_role = Role(name="auditor")
+        db.add_all([admin, role, operator_role, auditor_role, broker, strategy])
         db.flush()
+        db.add(UserRole(user_id=admin.id, role_id=role.id))
 
         db.add(
             Trade(

@@ -48,11 +48,19 @@ function authHeaders(token?: string): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function login(email: string, password: string) {
-  return request<TokenResponse>('/auth/login', {
+export async function login(email: string, password: string) {
+  const response = await fetch('/api/auth/login', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new ApiError(response.status, '/api/auth/login', text || 'Authentication failed');
+  }
+
+  return { access_token: 'cookie-session' } as TokenResponse;
 }
 
 export const api = {

@@ -18,8 +18,7 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const token = await login(email, password);
-      document.cookie = `auth_token=${token.access_token}; path=/; SameSite=Lax`;
+      await login(email, password);
       router.push('/dashboard');
       router.refresh();
     } catch {
