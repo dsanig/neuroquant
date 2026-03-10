@@ -77,3 +77,21 @@ make seed          # load sample records
 - API namespaced at `/api/v1`.
 
 See `docs/architecture.md` and `TODO.md` for implementation details and roadmap.
+
+
+## Production operations quick commands
+
+```bash
+./infra/scripts/build.sh             # build prod images
+./infra/scripts/up.sh                # start prod stack
+./infra/scripts/down.sh              # stop prod stack
+./infra/scripts/logs.sh [service...] # follow logs
+./infra/scripts/restart-service.sh backend
+./infra/scripts/backup-db.sh
+./infra/scripts/restore-db.sh backups/<file>.sql.gz
+```
+
+Detailed guides:
+- `docs/deployment.md`
+- `docs/operations.md`
+- `docs/backups.md`
