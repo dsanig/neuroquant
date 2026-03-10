@@ -38,7 +38,7 @@ Production-minded self-hosted internal hedge fund operating platform for portfol
    ```
 5. Access services:
    - Frontend: http://localhost:3000
-   - API docs: http://localhost:8000/docs
+   - API via Nginx gateway: http://localhost:8080/api/v1
    - Nginx gateway: http://localhost:8080
 
 ## Production deployment (Debian VM)
