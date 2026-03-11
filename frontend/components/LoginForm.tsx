@@ -46,7 +46,7 @@ export default function LoginForm() {
 
   return (
     <form ref={formRef} onSubmit={onSubmit} className="card auth-card">
-      <h1>Investment Control Center</h1>
+      <h1>NeuroQuant</h1>
       <p className="subtle">Internal authenticated access only.</p>
       <label>
         <span className="subtle">Email</span>

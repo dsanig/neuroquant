@@ -5,7 +5,7 @@ from celery.signals import task_failure, task_postrun, task_prerun
 from app.core.config import settings
 from app.core.metrics import CELERY_TASK_COUNT, CELERY_TASK_FAILURES
 
-celery_app = Celery("icc", broker=settings.redis_url, backend=settings.redis_url)
+celery_app = Celery("neuroquant", broker=settings.redis_url, backend=settings.redis_url)
 celery_app.conf.task_acks_late = True
 celery_app.conf.task_default_retry_delay = 10
 celery_app.conf.task_routes = {"app.tasks.jobs.*": {"queue": "default"}}

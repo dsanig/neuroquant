@@ -17,7 +17,7 @@ export default function AppShell({ pathname, user, children }: Props) {
         Skip to main content
       </a>
       <aside className="sidebar" aria-label="Primary">
-        <div className="brand">INVESTMENT CONTROL CENTER</div>
+        <div className="brand">NEUROQUANT</div>
         <nav>
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} className={`nav-item ${pathname === item.href ? 'active' : ''}`} href={item.href}>

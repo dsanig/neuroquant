@@ -1,4 +1,4 @@
-# Investment Control Center Backend
+# NeuroQuant Backend
 
 Production-oriented FastAPI backend for a hedge fund derivatives control platform.
 

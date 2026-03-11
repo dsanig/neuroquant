@@ -1,4 +1,4 @@
-# Investment Control Center Disaster Recovery Runbook
+# NeuroQuant Disaster Recovery Runbook
 
 ## 1. Failure scenarios covered
 
@@ -10,7 +10,7 @@
 ## 2. Backup workflow (daily + before upgrade)
 
 ```bash
-cd /srv/investment-control-center
+cd /srv/neuroquant
 ./infra/scripts/backup_postgres.sh
 sha256sum -c backups/postgres_*.sha256
 ```
@@ -18,7 +18,7 @@ sha256sum -c backups/postgres_*.sha256
 ## 3. Restore workflow (database)
 
 ```bash
-cd /srv/investment-control-center
+cd /srv/neuroquant
 ./infra/scripts/restore_postgres.sh backups/<backup_file>.sql.gz
 ./infra/scripts/check_health.sh
 ```
@@ -27,10 +27,10 @@ cd /srv/investment-control-center
 
 ```bash
 # on new Debian VM
-sudo mkdir -p /srv/investment-control-center
-sudo chown -R "$USER":"$USER" /srv/investment-control-center
-git clone <REPO_URL> /srv/investment-control-center
-cd /srv/investment-control-center
+sudo mkdir -p /srv/neuroquant
+sudo chown -R "$USER":"$USER" /srv/neuroquant
+git clone <REPO_URL> /srv/neuroquant
+cd /srv/neuroquant
 
 # restore env files from secret store / backup bundle
 cp /secure-location/.env .
@@ -62,7 +62,7 @@ docker compose -f compose.yaml -f compose.production.yaml up -d backend
 ## 6. Rollback during incident
 
 ```bash
-cd /srv/investment-control-center
+cd /srv/neuroquant
 git checkout <LAST_KNOWN_GOOD_TAG>
 ./infra/scripts/deploy.sh
 ./infra/scripts/restore_postgres.sh backups/<pre_incident_backup>.sql.gz

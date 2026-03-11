@@ -1,4 +1,4 @@
-# Design System - Investment Control Center
+# Design System - NeuroQuant
 
 ## Design principles
 - Serious, efficient, non-decorative UI.

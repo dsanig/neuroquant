@@ -1,9 +1,9 @@
-# Investment Control Center Upgrade Workflow
+# NeuroQuant Upgrade Workflow
 
 ## 1. Pre-upgrade snapshot and backup
 
 ```bash
-cd /srv/investment-control-center
+cd /srv/neuroquant
 git fetch --all --tags
 ./infra/scripts/backup_postgres.sh
 cp .env .env.pre_upgrade.$(date +%Y%m%d_%H%M%S)

@@ -1,4 +1,4 @@
-# Architecture - Investment Control Center
+# Architecture - NeuroQuant
 
 ## Design goals
 - Deterministic, auditable financial calculations.

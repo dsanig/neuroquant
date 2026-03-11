@@ -1,4 +1,4 @@
-# Investment Control Center Roadmap
+# NeuroQuant Roadmap
 
 ## Phase 1 (current scaffold)
 - [x] Monorepo and dockerized local/prod baseline

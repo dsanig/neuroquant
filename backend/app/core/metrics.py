@@ -26,34 +26,34 @@ except Exception:  # noqa: BLE001
 
 
 REQUEST_COUNT = Counter(
-    "icc_http_requests_total",
+    "neuroquant_http_requests_total",
     "Total HTTP requests handled by backend",
     ["method", "path", "status"],
 )
 REQUEST_LATENCY = Histogram(
-    "icc_http_request_latency_seconds",
+    "neuroquant_http_request_latency_seconds",
     "HTTP request latency in seconds",
     ["method", "path"],
 )
 
 CELERY_TASK_COUNT = Counter(
-    "icc_celery_tasks_total",
+    "neuroquant_celery_tasks_total",
     "Total Celery tasks observed",
     ["task_name", "state"],
 )
 CELERY_TASK_FAILURES = Counter(
-    "icc_celery_task_failures_total",
+    "neuroquant_celery_task_failures_total",
     "Total failed Celery tasks",
     ["task_name"],
 )
 
 IMPORT_BATCH_COUNT = Counter(
-    "icc_import_batches_total",
+    "neuroquant_import_batches_total",
     "Total import batches processed",
     ["source_system", "status"],
 )
 IMPORT_ERROR_COUNT = Counter(
-    "icc_import_errors_total",
+    "neuroquant_import_errors_total",
     "Total import errors captured",
     ["code"],
 )

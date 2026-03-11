@@ -1,6 +1,6 @@
 # Imports Pipeline Foundation
 
-This document defines the import domain and orchestration flow for Investment Control Center.
+This document defines the import domain and orchestration flow for NeuroQuant.
 
 ## Goals
 - Deterministic parsing for broker and custom reports.
