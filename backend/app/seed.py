@@ -10,10 +10,10 @@ from app.models.entities import BrokerAccount, Firm, MarginMetric, Role, Strateg
 def run() -> None:
     db = SessionLocal()
     try:
-        if db.scalar(select(User).where(User.email == "admin@icc.local")):
+        if db.scalar(select(User).where(User.email == "admin@admin.com")):
             return
 
-        admin = User(email="admin@icc.local", full_name="Platform Admin", password_hash=hash_password("ChangeMe123!"))
+        admin = User(email="admin@admin.com", full_name="Platform Admin", password_hash=hash_password("admin"))
         role = Role(name="admin")
         firm = Firm(name="Northstar Capital", legal_name="Northstar Capital Management LLC", base_currency="USD")
         strategy = Strategy(name="Income Wheel", description="CSP and covered call cycle")
