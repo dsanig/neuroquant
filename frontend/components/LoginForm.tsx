@@ -12,19 +12,26 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [debugState, setDebugState] = useState('idle');
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     console.debug('[LoginForm] submit triggered');
+    setDebugState('submit start');
     setError('');
     setLoading(true);
 
     try {
+      console.debug('[LoginForm] calling login()');
+      setDebugState('calling login()');
       await login(email, password);
+      console.debug('[LoginForm] login success; navigating to /dashboard');
+      setDebugState('login success');
       router.push('/dashboard');
       router.refresh();
     } catch (submitError) {
       console.error('[LoginForm] login failed', submitError);
+      setDebugState('login catch');
       setError('Authentication failed. Check credentials or contact operations support.');
     } finally {
       setLoading(false);
@@ -49,8 +56,9 @@ export default function LoginForm() {
         <span className="subtle">Password</span>
         <input value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={onInputKeyDown} type="password" required />
       </label>
+      <p className="subtle" aria-live="polite">Debug: {debugState}</p>
       {error ? <p className="state-error">{error}</p> : null}
-      <button type="button" disabled={loading} onClick={() => formRef.current?.requestSubmit()}>{loading ? 'Signing in…' : 'Sign In'}</button>
+      <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign In'}</button>
     </form>
   );
 }
