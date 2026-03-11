@@ -2,18 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const PUBLIC_PATHS = ['/login'];
 
+function isDevAuthBypassEnabled(): boolean {
+  return process.env.DEV_AUTH_BYPASS === 'true';
+}
+
 export function proxy(request: NextRequest) {
+  const devAuthBypass = isDevAuthBypassEnabled();
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
 
-  if (!token && !PUBLIC_PATHS.includes(pathname)) {
+  if (!devAuthBypass && !token && !PUBLIC_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (token && pathname === '/login') {
+  if ((devAuthBypass || token) && pathname === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

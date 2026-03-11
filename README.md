@@ -72,6 +72,19 @@ make migrate       # alembic upgrade
 make seed          # load sample records
 ```
 
+
+### Temporary dev auth bypass (frontend only)
+
+To access protected frontend routes without browser login during local stabilization:
+
+```bash
+# frontend/.env.local
+DEV_AUTH_BYPASS=true
+```
+
+Then restart the frontend (`make up` or restart the `frontend` container).
+Set `DEV_AUTH_BYPASS=false` (or remove it) to restore normal login protection.
+
 ## Security & auth notes
 
 - Session/JWT hybrid internal auth with RBAC claims.
