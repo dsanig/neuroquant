@@ -14,5 +14,4 @@ class AuditMixin:
     updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_system: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source_file: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    import_batch_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
