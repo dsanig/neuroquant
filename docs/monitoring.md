@@ -12,12 +12,12 @@ This service now exposes a baseline observability surface for operators.
   - `GET /readyz` (readiness; checks DB)
   - `GET /api/v1/health` (dependency status for Postgres + Redis)
 - **Metrics**:
-  - `icc_http_requests_total`
-  - `icc_http_request_latency_seconds`
-  - `icc_celery_tasks_total`
-  - `icc_celery_task_failures_total`
-  - `icc_import_batches_total`
-  - `icc_import_errors_total`
+  - `neuroquant_http_requests_total`
+  - `neuroquant_http_request_latency_seconds`
+  - `neuroquant_celery_tasks_total`
+  - `neuroquant_celery_task_failures_total`
+  - `neuroquant_import_batches_total`
+  - `neuroquant_import_errors_total`
 
 ## Monitoring profile (Compose)
 
@@ -45,4 +45,4 @@ docker compose -f compose.yaml -f compose.production.yaml --profile monitoring u
 2. Check readiness: `curl -fsS http://localhost:8000/readyz`
 3. Check dependency matrix: `curl -fsS http://localhost:8000/api/v1/health`
 4. Inspect recent logs for shared `request_id` / `task_id`.
-5. Check Prometheus counters for spikes in `icc_import_errors_total` and `icc_celery_task_failures_total`.
+5. Check Prometheus counters for spikes in `neuroquant_import_errors_total` and `neuroquant_celery_task_failures_total`.

@@ -39,7 +39,7 @@
 
 1. Inspect batch status via API `/api/v1/imports/{id}`.
 2. Search worker logs by `import_batch_id` and `task_id`.
-3. Check metrics: `icc_import_batches_total`, `icc_import_errors_total`, `icc_celery_task_failures_total`.
+3. Check metrics: `neuroquant_import_batches_total`, `neuroquant_import_errors_total`, `neuroquant_celery_task_failures_total`.
 4. Re-queue parse task when root cause fixed.
 
 ## Frontend cannot reach backend

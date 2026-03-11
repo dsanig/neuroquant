@@ -1,4 +1,4 @@
-# Investment Control Center
+# NeuroQuant
 
 Production-minded self-hosted internal hedge fund operating platform for portfolio control, risk, margin, trade history, and auditability.
 

@@ -1,4 +1,4 @@
-# Investment Control Center Deployment (Debian VM + Docker Compose)
+# NeuroQuant Deployment (Debian VM + Docker Compose)
 
 ## Operator automation quickstart
 

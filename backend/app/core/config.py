@@ -7,14 +7,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    app_name: str = "Investment Control Center API"
+    app_name: str = "NeuroQuant API"
     environment: Literal["development", "production", "test"] = "development"
     api_v1_prefix: str = "/api/v1"
-    database_url: str = "sqlite+pysqlite:///./icc.db"
+    database_url: str = "sqlite+pysqlite:///./neuroquant.db"
     redis_url: str = "redis://localhost:6379/0"
     jwt_secret_key: str = "change-me"
-    jwt_issuer: str = "investment-control-center"
-    jwt_audience: str = "investment-control-center-users"
+    jwt_issuer: str = "neuroquant"
+    jwt_audience: str = "neuroquant-users"
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 10080
     log_level: str = "INFO"

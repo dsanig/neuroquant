@@ -40,7 +40,7 @@ Restore behavior:
 Run at 02:30 daily as deployment user:
 
 ```cron
-30 2 * * * cd /srv/investment-control-center && ./infra/scripts/backup-db.sh >> /var/log/icc-backup.log 2>&1
+30 2 * * * cd /srv/neuroquant && ./infra/scripts/backup-db.sh >> /var/log/neuroquant-backup.log 2>&1
 ```
 
 ## Redis persistence note

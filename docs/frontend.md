@@ -1,4 +1,4 @@
-# Frontend Architecture - Investment Control Center
+# Frontend Architecture - NeuroQuant
 
 ## Objectives
 - Authenticated internal operations console for portfolio control.
