@@ -1,53 +1,79 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { KeyboardEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { login } from '@/lib/api';
 
 export default function LoginForm() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleLogin() {
     if (loading) {
       return;
     }
-
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get('email') ?? '').trim();
-    const password = String(formData.get('password') ?? '');
 
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       router.push('/dashboard');
       router.refresh();
-    } catch (submitError) {
+    } catch {
       setError('Authentication failed. Check credentials or contact operations support.');
     } finally {
       setLoading(false);
     }
   }
 
+  function onEnterPress(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+    handleLogin();
+  }
+
   return (
-    <form onSubmit={onSubmit} className="card auth-card">
+    <div className="card auth-card" role="form" aria-busy={loading}>
       <h1>NeuroQuant</h1>
       <p className="subtle">Internal authenticated access only.</p>
-      <label>
+      <label htmlFor="email">
         <span className="subtle">Email</span>
-        <input id="email" name="email" type="email" autoComplete="email" required />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          onKeyDown={onEnterPress}
+          required
+        />
       </label>
-      <label>
+      <label htmlFor="password">
         <span className="subtle">Password</span>
-        <input id="password" name="password" type="password" autoComplete="current-password" required />
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          onKeyDown={onEnterPress}
+          required
+        />
       </label>
       {error ? <p className="state-error">{error}</p> : null}
-      <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign In'}</button>
-    </form>
+      <button type="button" onClick={handleLogin} disabled={loading}>
+        {loading ? 'Signing in…' : 'Sign In'}
+      </button>
+    </div>
   );
 }
