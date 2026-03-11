@@ -1,25 +1,30 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+import bcrypt
 from jose import jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
+BCRYPT_ROUNDS = 12
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    password_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def password_needs_rehash(hashed_password: str) -> bool:
-    return pwd_context.needs_update(hashed_password)
+    parts = hashed_password.split("$", 3)
+    if len(parts) < 3 or not parts[2].isdigit():
+        return True
+    return int(parts[2]) != BCRYPT_ROUNDS
 
 
 def validate_password_strength(password: str) -> None:
