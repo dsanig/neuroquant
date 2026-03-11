@@ -36,6 +36,8 @@ Production-minded self-hosted internal hedge fund operating platform for portfol
    ```bash
    make seed
    ```
+> **Database identity migration note:** If you previously initialized Postgres with legacy ICC credentials/database names, run `docker compose down -v` before `make up` so the `neuroquant` database/user are recreated from the new environment values.
+
 5. Access services:
    - Frontend: http://localhost:3000
    - API via Nginx gateway: http://localhost:8080/api/v1
