@@ -25,7 +25,6 @@ def audit_columns():
         sa.Column("updated_by", sa.String(255), nullable=True),
         sa.Column("source_system", sa.String(100), nullable=True),
         sa.Column("source_file", sa.String(255), nullable=True),
-        sa.Column("import_batch_id", sa.String(64), nullable=True),
         sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.text("false")),
     ]
 
