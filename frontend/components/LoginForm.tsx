@@ -37,7 +37,7 @@ export default function LoginForm() {
     }
 
     event.preventDefault();
-    handleLogin();
+    void handleLogin();
   }
 
   return (
@@ -71,7 +71,11 @@ export default function LoginForm() {
         />
       </label>
       {error ? <p className="state-error">{error}</p> : null}
-      <button type="button" onClick={handleLogin} disabled={loading}>
+      <button
+        type="button"
+        onClick={() => void handleLogin()}
+        aria-disabled={loading}
+      >
         {loading ? 'Signing in…' : 'Sign In'}
       </button>
     </div>
