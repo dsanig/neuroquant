@@ -121,7 +121,6 @@ class ImportService:
                     executed_at=record.executed_at,
                     roll_group_id=None,
                     source_file=record.metadata.source_file,
-                    import_batch_id=str(record.metadata.import_batch_id),
                     source_system=batch.source_system_name,
                 )
             )
